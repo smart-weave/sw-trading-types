@@ -21,66 +21,130 @@ yarn add @smart-weave/sw-trading-types
 
 ## Usage
 
-### Basic Import
+### Basic Import (All Types)
 ```typescript
 import { 
+  // Common types
+  Timestamp, 
+  
+  // Trading types
   PendingOrder, 
-  PositionLifecycleState, 
   AutoTradingSettings,
-  DateTimeType 
+  TradingLog,
+  
+  // Position types
+  Position,
+  PositionLifecycleStatus,
+  
+  // Constants
+  FIRESTORE_COLLECTIONS,
+  ACTION_TYPES
 } from '@smart-weave/sw-trading-types';
+```
+
+### Structured Imports (Recommended)
+```typescript
+// Import by category for better organization
+import { Timestamp, FIRESTORE_COLLECTIONS } from '@smart-weave/sw-trading-types/common';
+import { PendingOrder, AutoTradingSettings } from '@smart-weave/sw-trading-types/trading';
+import { Position, PositionLifecycleStatus } from '@smart-weave/sw-trading-types/position';
 ```
 
 ### Example Usage
 
-#### Working with Pending Orders
+#### Working with Orders
 ```typescript
-import { PendingOrder, OrderSide, OrderType } from '@smart-weave/sw-trading-types';
+import { PendingOrder, OrderType, OrderStatus } from '@smart-weave/sw-trading-types';
 
 const order: PendingOrder = {
-  id: 'order-123',
-  symbol: 'BTCUSDT',
-  side: OrderSide.BUY,
-  type: OrderType.LIMIT,
-  quantity: 1.5,
-  price: 45000,
+  positionId: 'pos-123',
+  orderId: 'order-456',
+  orderType: 'buy',
+  symbol: '005930',
+  name: '삼성전자',
+  quantity: 10,
+  orderPrice: 75000,
   status: 'pending',
+  trigger: 'manual',
   createdAt: new Date(),
-  // ... other required fields
 };
 ```
 
-#### Position Lifecycle Management
+#### Position Management
 ```typescript
-import { PositionLifecycleState } from '@smart-weave/sw-trading-types';
+import { Position, PositionLifecycleStatus } from '@smart-weave/sw-trading-types';
 
-const currentState: PositionLifecycleState = PositionLifecycleState.MONITORING;
+const position: Position = {
+  symbol: '005930',
+  name: '삼성전자',
+  amount: 10,
+  openPrice: 75000,
+  lifecycleStatus: 'confirmed',
+  openDate: '2025-10-11',
+  currentPrice: 77000,
+  netPL: 20000,
+  plRatio: 2.67
+};
 ```
 
-#### Auto Trading Settings
+#### Auto Trading Configuration
 ```typescript
-import { AutoTradingSettings } from '@smart-weave/sw-trading-types';
+import { AutoTradingSettings, DEFAULT_AUTO_TRADING_SETTINGS } from '@smart-weave/sw-trading-types';
 
 const settings: AutoTradingSettings = {
+  ...DEFAULT_AUTO_TRADING_SETTINGS,
   enabled: true,
-  maxPositionSize: 10000,
-  riskLevel: 'medium',
-  // ... other settings
+  targetSellSettings: {
+    enabled: true,
+    defaultTargetProfitRate: 15, // 15% profit target
+    partialSellEnabled: true,
+    partialSellRatio: 50,
+    remainingHoldingRate: 50
+  }
 };
+```
+
+## Package Structure
+
+The package is organized into logical modules:
+
+```
+@smart-weave/sw-trading-types/
+├── common/          # Base types and constants
+├── trading/         # Trading operations (orders, automation, logs)
+├── position/        # Position management and lifecycle
+└── index           # Main export (all types)
 ```
 
 ## Available Types
 
-### Core Types
-- `PendingOrder` - Represents an unfilled trading order
-- `PositionLifecycleState` - Enum for position states (OPENED, MONITORING, CLOSING, etc.)
-- `AutoTradingSettings` - Configuration for automated trading
-- `DateTimeType` - Flexible datetime type for different runtime environments
+### Common Types (`/common`)
+- `Timestamp` - Universal timestamp type (Date | Firestore timestamp)
+- `ModelBase` - Base interface for all domain models
+- `FIRESTORE_COLLECTIONS` - Collection path constants
+- `ACTION_TYPES` - Trading action constants
+- `TRADING_DAY_OPTIONS` - Trading day configuration
 
-### Enums
-- `OrderSide` - BUY or SELL
-- `OrderType` - MARKET, LIMIT, STOP, etc.
-- `OrderStatus` - Order execution status
+### Trading Types (`/trading`)
+- `PendingOrder` - Unfilled trading orders
+- `AutoTradingSettings` - Automated trading configuration
+- `TradingLog` - Trading execution logs
+- `OrderStatus` - Order status states (`pending`, `completed`, `failed`, `cancelled`)
+- `OrderType` - Order types (`buy`, `sell`)
+- `OrderTrigger` - Order triggers (`manual`, `system`)
+
+### Position Types (`/position`)
+- `Position` - Complete position model with lifecycle
+- `PositionLifecycleStatus` - Detailed position states
+- `PositionType` - Position classification
+- `PositionStatusDisplayInfo` - UI display information
+
+### Lifecycle States
+Position lifecycle includes granular states:
+- **Entry**: `entry_order_pending`, `entry_order_failed`, `entry_unconfirmed`
+- **Active**: `confirmed` 
+- **Exit**: `exit_order_pending`, `exit_order_failed`, `liquidated`
+- **Final**: `expired`
 
 ## Development
 
