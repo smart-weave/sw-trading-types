@@ -1,6 +1,6 @@
 {
   "name": "@smart-weave/sw-trading-types",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "TypeScript types for smart weave trading system",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
