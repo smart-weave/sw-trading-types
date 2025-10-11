@@ -96,12 +96,57 @@ npm run clean
 
 ## Publishing
 
-This package is published to npm as a public package. To publish a new version:
+This package is published to npm as a public package under the `@smart-weave` organization.
 
-1. Update the version in `package.json`
-2. Run `npm publish`
+### For Maintainers
 
-The package will automatically build before publishing thanks to the `prepublishOnly` script.
+#### Prerequisites
+1. You must be a member of the `@smart-weave` npm organization
+2. You must be logged in to npm: `npm login`
+3. Ensure all changes are committed and pushed to GitHub
+
+#### Publishing Steps
+
+1. **Commit all changes**:
+   ```bash
+   git add .
+   git commit -m "Your commit message"
+   git push
+   ```
+
+2. **Update version** (choose one):
+   ```bash
+   # For bug fixes (1.0.2 -> 1.0.3)
+   npm version patch
+   
+   # For new features (1.0.2 -> 1.1.0)
+   npm version minor
+   
+   # For breaking changes (1.0.2 -> 2.0.0)
+   npm version major
+   ```
+
+3. **Publish to npm**:
+   ```bash
+   npm publish
+   ```
+
+#### Automated Build Process
+The package automatically:
+- Cleans the `dist` folder
+- Compiles TypeScript files
+- Generates type definitions (`.d.ts` files)
+- Creates source maps
+
+#### Version History
+- `1.0.0` - Initial release
+- `1.0.1` - Package setup and configuration
+- `1.0.2` - Added position-model.ts and removed duplicates
+
+### What gets published
+- `dist/` - Compiled JavaScript and TypeScript declaration files
+- `types/` - Source TypeScript files (for reference)
+- `README.md`, `LICENSE`, `package.json`
 
 ## License
 
