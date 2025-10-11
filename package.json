@@ -1,0 +1,41 @@
+{
+  "name": "@smart-weave/sw-trading-types",
+  "version": "1.0.0",
+  "description": "TypeScript types for smart weave trading system",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "types/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rmdir /s /q dist 2>nul || echo Directory not found",
+    "prepublishOnly": "npm run clean && npm run build",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "typescript",
+    "types",
+    "trading",
+    "smart-weave"
+  ],
+  "author": "Smart Weave",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smart-weave/sw-trading-types.git"
+  },
+  "bugs": {
+    "url": "https://github.com/smart-weave/sw-trading-types/issues"
+  },
+  "homepage": "https://github.com/smart-weave/sw-trading-types#readme",
+  "devDependencies": {
+    "typescript": "^5.2.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
