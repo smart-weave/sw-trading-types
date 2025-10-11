@@ -9,8 +9,12 @@ export * from './pending-order';
 // 포지션 생명주기 상태 타입 export
 export * from './position-lifecycle';
 
+// 포지션 모델 타입 export
+export * from './position-model';
+
 /**
  * 시간 타입 - 런타임에 따라 다르게 처리
+ * @deprecated position-model.ts의 Timestamp 타입을 사용하세요
  */
 export type DateTimeType = Date | { seconds: number; nanoseconds: number };
 
@@ -65,61 +69,6 @@ export interface KisApiSettings {
   appSecret: string;
   accountNumber: string;
   enabled: boolean;
-}
-
-/**
- * 포지션 상태 확장
- */
-export type PositionStatus = 'pending' | 'confirmed' | 'liquidated';
-
-/**
- * 포지션
- */
-export interface Position {
-  /** Firestore 문서 ID (자동 생성) */
-  id?: string;
-  /** 포지션 상태 (pending: 예정, confirmed: 확정, liquidated: 청산 완료) */
-  status: PositionStatus;
-  /** 포지션 오픈 일자 (ISO 문자열) */
-  openDate: string;
-  /** 포지션 청산 일자 (ISO 문자열, 선택) */
-  closeDate?: string;
-  /** 종목명 (예: 삼성전자) */
-  name: string;
-  /** 종목 코드 (예: 005930) */
-  symbol: string;
-  /** 포지션 유형 (예: 롱, 숏 등) */
-  type: string;
-  /** 수량 (주식 수 등) */
-  amount: number;
-  /** 오픈 프라이스 (진입 가격) */
-  openPrice: number;
-  /** 실제 체결가 (체결 완료 시) */
-  executedPrice?: number;
-  /** 매입금액 (진입 시 총 투자금) */
-  currentValue?: number;
-  /** 현재가 (실시간 시장가) */
-  currentPrice?: number;
-  /** 현재 가치 (실시간 평가금액) */
-  marketValue?: number;
-  /** 순손익 (실현/미실현 손익) */
-  netPL?: number;
-  /** 손익률 (%) */
-  plRatio?: number;
-  /** 목표가 (목표 매도가) */
-  targetPrice?: number;
-  /** 목표금액 (목표가 도달 시 평가금액) */
-  targetValue?: number;
-  /** 목표손익 (목표가 도달 시 손익) */
-  targetPL?: number;
-  /** 목표손익률 (%) */
-  targetPLRatio?: number;
-  /** 거래 수수료 */
-  fee?: number;
-  /** 생성일 */
-  createdAt?: DateTimeType;
-  /** 수정일 */
-  updatedAt?: DateTimeType;
 }
 
 /**
