@@ -140,6 +140,12 @@ export interface Position extends ModelBase {
    * 감춤 여부 (새로 추가된 필드)
    */
   hidden?: boolean;
+  
+  /**
+   * 수동으로 추가된 포지션 여부
+   * 수동 포지션은 주문 없이 바로 확정되며, 청산 시에도 주문을 거치지 않음
+   */
+  isManual?: boolean;
 }
 
 /**

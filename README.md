@@ -195,6 +195,30 @@ This package is published to npm as a public package under the `@smart-weave` or
    npm publish
    ```
 
+4. **Push tags to repository**:
+   ```bash
+   git push --tags
+   ```
+
+#### Complete Deployment Example (v1.1.0)
+Here's the complete workflow used for the v1.1.0 release with major package restructure:
+
+```bash
+# 1. Ensure all changes are committed
+git status
+git add .
+git push
+
+# 2. Update version (minor for new features, major for breaking changes)
+npm version minor  # 1.0.3 -> 1.1.0
+
+# 3. Publish to npm (auto-builds before publishing)
+npm publish
+
+# 4. Push version tags to GitHub
+git push --tags
+```
+
 #### Automated Build Process
 The package automatically:
 - Cleans the `dist` folder
@@ -206,6 +230,8 @@ The package automatically:
 - `1.0.0` - Initial release
 - `1.0.1` - Package setup and configuration
 - `1.0.2` - Added position-model.ts and removed duplicates
+- `1.0.3` - Updated README with detailed publishing instructions
+- `1.1.0` - **Major restructure**: Organized types into logical modules (`common/`, `trading/`, `position/`), added comprehensive JSDoc comments, improved package structure
 
 ### What gets published
 - `dist/` - Compiled JavaScript and TypeScript declaration files
