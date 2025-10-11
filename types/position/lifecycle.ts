@@ -75,6 +75,10 @@ export type PositionLifecycleStatus =
   | 'exit_order_cancelled'   // 청산 주문 취소됨 (사용자 또는 시스템)
   | 'liquidated'             // 청산 완료 (최종 상태)
   
+  // 수동 포지션 관련 상태
+  | 'manual_entry'           // 수동으로 진입한 포지션 (주문 없이 직접 추가)
+  | 'manual_liquidated'      // 수동으로 청산한 포지션 (주문 없이 직접 청산)
+  
   // 공통 상태
   | 'expired';               // 미확정 상태에서 시간 초과로 만료됨
 
@@ -141,6 +145,10 @@ export const ALLOWED_TRANSITIONS: Record<PositionLifecycleStatus, PositionLifecy
   'exit_order_pending': ['liquidated', 'exit_order_failed', 'exit_order_cancelled'],
   'exit_order_failed': ['exit_order_pending', 'confirmed'], // 재시도 또는 보유 상태로 복귀
   'exit_order_cancelled': ['exit_order_pending', 'confirmed'], // 재시도 또는 보유 상태로 복귀
+  
+  // 수동 포지션 프로세스
+  'manual_entry': ['manual_liquidated'], // 수동 진입 → 수동 청산만 가능
+  'manual_liquidated': [], // 최종 상태
   
   // 최종 상태
   'liquidated': [], // 최종 상태
@@ -252,6 +260,22 @@ export const STATUS_DISPLAY_INFO: Record<PositionLifecycleStatus, {
     bgColor: 'bg-orange-100',
     description: '미확정 상태로 하루가 지나 만료되었습니다',
     actions: ['reorder', 'delete'] // 재주문 또는 삭제
+  },
+  
+  // 수동 포지션 관련 상태
+  'manual_entry': {
+    label: '수동진입',
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-100',
+    description: '수동으로 진입한 포지션입니다',
+    actions: ['manual_liquidate', 'edit'] // 수동 청산 또는 수정
+  },
+  'manual_liquidated': {
+    label: '수동청산',
+    color: 'text-indigo-800',
+    bgColor: 'bg-indigo-200',
+    description: '수동으로 청산된 포지션입니다',
+    actions: ['archive'] // 아카이브만 가능
   }
 };
 
