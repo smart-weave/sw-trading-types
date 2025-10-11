@@ -146,8 +146,12 @@ export interface Position extends ModelBase {
  * 포지션 상태별 표시 정보
  */
 export interface PositionStatusDisplayInfo {
+  /** 상태 라벨 */
   label: string;
+  /** 텍스트 색상 */
   color: string;
+  /** 배경 색상 */
   bgColor: string;
+  /** 상태 설명 */
   description: string;
 }

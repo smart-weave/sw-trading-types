@@ -403,19 +403,33 @@ export const DAILY_SYNC_RULES: SyncRule[] = [
  * - 'scheduler': 스케줄러 작업 (만료 처리 등)
  */
 export interface StatusTransitionLog {
+  /** 로그 ID */
   id: string;
+  /** 사용자 ID */
   userId: string;
+  /** 포지션 ID */
   positionId: string;
+  /** 이전 상태 */
   fromStatus: PositionLifecycleStatus;
+  /** 변경된 상태 */
   toStatus: PositionLifecycleStatus;
+  /** 상태 변경 이벤트 */
   event: StatusTransitionEvent;
+  /** 변경 시간 */
   timestamp: Timestamp;
+  /** 변경 주체 */
   triggeredBy: 'system' | 'user' | 'scheduler';
+  /** 메타데이터 */
   metadata: {
+    /** 관련 주문 ID */
     orderId?: string;
+    /** 변경 사유 */
     reason?: string;
+    /** 에러 메시지 (실패 시) */
     errorMessage?: string;
+    /** 사용자 액션 */
     userAction?: string;
+    /** 시스템 프로세스 */
     systemProcess?: string;
   };
 }
@@ -449,9 +463,13 @@ export interface PositionLifecycleInfo {
    * 🎯 Next.js 개발팀: 주문 히스토리 UI 표시
    */
   orderHistory: {
+    /** 주문 ID */
     orderId: string;
-    orderType: 'entry' | 'exit'; // 진입 또는 청산 주문
+    /** 주문 타입 (진입 또는 청산 주문) */
+    orderType: 'entry' | 'exit';
+    /** 주문 생성 시간 */
     timestamp: Timestamp;
+    /** 주문 상태 */
     status: 'pending' | 'completed' | 'failed' | 'cancelled';
   }[];
   
@@ -462,10 +480,15 @@ export interface PositionLifecycleInfo {
    * ⚡ Functions 팀: 디버깅 및 감사용
    */
   statusHistory: {
+    /** 이전 상태 */
     from: PositionLifecycleStatus;
+    /** 변경된 상태 */
     to: PositionLifecycleStatus;
+    /** 변경 시간 */
     timestamp: Timestamp;
+    /** 변경 사유 */
     reason: string;
+    /** 변경 주체 (시스템/사용자/스케줄러) */
     triggeredBy: 'system' | 'user' | 'scheduler';
   }[];
   
@@ -476,8 +499,11 @@ export interface PositionLifecycleInfo {
    * 🎯 Next.js 개발팀: 만료 카운트다운 표시
    */
   expirationInfo?: {
+    /** 마지막 주문 날짜 */
     lastOrderDate: Timestamp;
+    /** 만료 처리된 시간 */
     expiredAt?: Timestamp;
+    /** 자동 만료 처리 여부 */
     autoExpired: boolean;
   };
 }

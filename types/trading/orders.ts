@@ -94,17 +94,17 @@ export interface OrderConclusionResponse {
     /** 주문번호 */
     odno: string;
     
-    /** 체결여부 */
-    tot_ccld_qty: string; // 총 체결 수량
+    /** 총 체결 수량 */
+    tot_ccld_qty: string;
     
-    /** 체결가격 */
-    avg_prvs: string; // 평균 체결가
+    /** 평균 체결가 */
+    avg_prvs: string;
     
-    /** 주문상태 */
-    ord_stat_cd: string; // 주문상태코드
+    /** 주문상태코드 */
+    ord_stat_cd: string;
     
-    /** 체결시간 */
-    ccld_dttm?: string; // 체결일시
+    /** 체결일시 */
+    ccld_dttm?: string;
   };
 }
 
