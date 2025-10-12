@@ -11,18 +11,6 @@ import { Timestamp, ModelBase } from '../common/base';
  */
 export type PositionType = "진입" | "청산";
 
-
-/**
- * 청산 주문 정보 타입
- */
-export interface LiquidationOrderInfo {
-  orderId?: string; // pending order ID
-  orderPrice?: number; // 청산 주문가
-  orderStatus?: 'pending' | 'completed' | 'failed' | 'cancelled'; // 주문 상태
-  orderDate?: string; // 주문 생성일
-  orderType?: 'target_price' | 'stop_loss' | 'manual'; // 주문 타입
-}
-
 /**
  * 통합 Position 모델
  * UserPosition의 모든 필드를 포함하는 완전한 포지션 모델
@@ -160,9 +148,9 @@ export interface Position extends ModelBase {
   isManual?: boolean;
 
   /**
-   * 청산 주문 정보 (선택적)
+   * 청산 주문 아이디 (선택적)
    */
-  liquidationOrder?: LiquidationOrderInfo | null;
+  liquidationOrderId?: string;
 }
 
 /**
