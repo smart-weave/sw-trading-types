@@ -104,6 +104,84 @@ const settings: AutoTradingSettings = {
 };
 ```
 
+#### Performance Management (Framework-Agnostic)
+The performance management system works with both Next.js (Firestore Web SDK) and Firebase Functions (Admin SDK):
+
+```typescript
+import { 
+  processPositionLiquidation, 
+  PerformanceCRUD,
+  PositionLiquidationInfo 
+} from '@smart-weave/sw-trading-types';
+
+// Example: Firebase Functions (Admin SDK)
+import { getFirestore } from 'firebase-admin/firestore';
+
+const db = getFirestore();
+const adminCRUD: PerformanceCRUD = {
+  async get(collection, docId) {
+    const doc = await db.collection(collection).doc(docId).get();
+    return doc.exists ? doc.data() : null;
+  },
+  async create(collection, docId, data) {
+    await db.collection(collection).doc(docId).set(data);
+  },
+  async update(collection, docId, data) {
+    await db.collection(collection).doc(docId).set(data, { merge: true });
+  }
+};
+
+// Process position liquidation
+const liquidationInfo: PositionLiquidationInfo = {
+  userId: 'user123',
+  positionId: 'pos456',
+  symbol: '005930',
+  name: '삼성전자',
+  openPrice: 70000,
+  closePrice: 75000,
+  amount: 10,
+  openDate: new Date('2025-10-01'),
+  closeDate: new Date('2025-10-14'),
+  fee: 1000,
+  realizedPL: 49000,
+  plRatio: 7.14
+};
+
+const result = await processPositionLiquidation(liquidationInfo, {
+  crud: adminCRUD
+});
+
+// Result shows which periods were updated
+console.log(result.updatedPeriods); // ['daily', 'weekly', 'monthly', 'yearly', 'overall']
+```
+
+```typescript
+// Example: Next.js (Firestore Web SDK)
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+
+const db = getFirestore();
+const clientCRUD: PerformanceCRUD = {
+  async get(collection, docId) {
+    const docRef = doc(db, collection, docId);
+    const snapshot = await getDoc(docRef);
+    return snapshot.exists() ? snapshot.data() : null;
+  },
+  async create(collection, docId, data) {
+    const docRef = doc(db, collection, docId);
+    await setDoc(docRef, data);
+  },
+  async update(collection, docId, data) {
+    const docRef = doc(db, collection, docId);
+    await setDoc(docRef, data, { merge: true });
+  }
+};
+
+// Use the same processPositionLiquidation function
+const result = await processPositionLiquidation(liquidationInfo, {
+  crud: clientCRUD
+});
+```
+
 ## Package Structure
 
 The package is organized into logical modules:
@@ -138,6 +216,11 @@ The package is organized into logical modules:
 - `PositionLifecycleStatus` - Detailed position states
 - `PositionType` - Position classification
 - `PositionStatusDisplayInfo` - UI display information
+- `PerformanceRecord` - Performance statistics by period (daily/weekly/monthly/yearly/overall)
+- `PerformancePeriod` - Time period types for performance tracking
+- `PositionLiquidationInfo` - Liquidation information for performance calculation
+- `PerformanceCRUD` - Framework-agnostic CRUD interface
+- `processPositionLiquidation()` - Entry point function for performance management
 
 ### Lifecycle States
 Position lifecycle includes granular states:
