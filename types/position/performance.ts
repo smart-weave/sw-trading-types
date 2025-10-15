@@ -23,6 +23,7 @@
  */
 
 import { Timestamp, ModelBase } from '../common/base';
+import { Position } from './model';
 
 /**
  * 성과 집계 기간 타입
@@ -31,74 +32,6 @@ import { Timestamp, ModelBase } from '../common/base';
  * ⚡ Functions 팀: 기간별 컬렉션 분리 및 쿼리
  */
 export type PerformancePeriod = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'overall';
-
-/**
- * 포지션 청산 정보
- * 
- * processPositionLiquidation 함수의 입력 파라미터
- * 청산된 포지션의 핵심 정보를 담고 있음
- */
-export interface PositionLiquidationInfo {
-  /**
-   * 사용자 ID
-   */
-  userId: string;
-  
-  /**
-   * 포지션 ID
-   */
-  positionId: string;
-  
-  /**
-   * 종목 심볼
-   */
-  symbol: string;
-  
-  /**
-   * 종목명
-   */
-  name?: string;
-  
-  /**
-   * 진입가
-   */
-  openPrice: number;
-  
-  /**
-   * 청산가
-   */
-  closePrice: number;
-  
-  /**
-   * 수량
-   */
-  amount: number;
-  
-  /**
-   * 진입 시간
-   */
-  openDate: Timestamp;
-  
-  /**
-   * 청산 시간
-   */
-  closeDate: Timestamp;
-  
-  /**
-   * 수수료
-   */
-  fee?: number;
-  
-  /**
-   * 실현 손익 (수수료 포함)
-   */
-  realizedPL: number;
-  
-  /**
-   * 수익률 (%)
-   */
-  plRatio: number;
-}
 
 /**
  * 성과 통계 데이터
@@ -414,7 +347,8 @@ export interface PerformanceProcessResult {
  * 🎯 Next.js 개발팀: 클라이언트 측에서 호출 (예: 사용자가 수동으로 청산할 때)
  * ⚡ Functions 팀: 서버 측에서 호출 (예: 자동 청산, 배치 작업)
  * 
- * @param liquidationInfo 청산된 포지션 정보
+ * @param position 청산된 포지션 객체
+ * @param userId 사용자 ID
  * @param config 성과 관리 설정 (CRUD 구현체 포함)
  * @returns 처리 결과
  * 
@@ -422,20 +356,8 @@ export interface PerformanceProcessResult {
  * ```typescript
  * // Functions에서 사용
  * const result = await processPositionLiquidation(
- *   {
- *     userId: 'user123',
- *     positionId: 'pos456',
- *     symbol: '005930',
- *     name: '삼성전자',
- *     openPrice: 70000,
- *     closePrice: 75000,
- *     amount: 10,
- *     openDate: openTimestamp,
- *     closeDate: closeTimestamp,
- *     fee: 1000,
- *     realizedPL: 49000,
- *     plRatio: 7.14
- *   },
+ *   position, // Position 객체
+ *   'user123',
  *   {
  *     crud: adminCRUD, // Firebase Admin SDK로 구현된 CRUD
  *   }
@@ -443,7 +365,8 @@ export interface PerformanceProcessResult {
  * 
  * // Next.js에서 사용
  * const result = await processPositionLiquidation(
- *   liquidationInfo,
+ *   position,
+ *   userId,
  *   {
  *     crud: clientCRUD, // Firestore Web SDK로 구현된 CRUD
  *   }
@@ -451,7 +374,8 @@ export interface PerformanceProcessResult {
  * ```
  */
 export async function processPositionLiquidation(
-  liquidationInfo: PositionLiquidationInfo,
+  position: Position,
+  userId: string,
   config: PerformanceManagerConfig
 ): Promise<PerformanceProcessResult> {
   const result: PerformanceProcessResult = {
@@ -473,10 +397,10 @@ export async function processPositionLiquidation(
       overall: collections.overall || 'overall_performance',
     };
 
-    // 청산 시간을 Date로 변환
-    const closeDate = liquidationInfo.closeDate instanceof Date
-      ? liquidationInfo.closeDate
-      : new Date(liquidationInfo.closeDate.seconds * 1000);
+    // 청산 시간을 Date로 변환 (Position의 closeDate는 string)
+    const closeDate = position.closeDate
+      ? new Date(position.closeDate)
+      : new Date();
 
     // 기간별 키 생성
     const year = closeDate.getFullYear();
@@ -498,7 +422,7 @@ export async function processPositionLiquidation(
     for (const period of periods) {
       const collectionName = collectionNames[period];
       const periodKey = periodKeys[period];
-      const docId = `${liquidationInfo.userId}_${periodKey}`;
+      const docId = `${userId}_${periodKey}`;
 
       try {
         // 기존 레코드 조회
@@ -506,10 +430,10 @@ export async function processPositionLiquidation(
 
         if (existingRecord) {
           // 기존 레코드 업데이트
-          const updatedStats = calculateUpdatedStats(existingRecord.stats, liquidationInfo);
+          const updatedStats = calculateUpdatedStats(existingRecord.stats, position);
           const updatedPositionIds = [
             ...existingRecord.liquidatedPositionIds,
-            liquidationInfo.positionId,
+            position.id!,
           ];
 
           await crud.update<PerformanceRecord>(collectionName, docId, {
@@ -521,15 +445,15 @@ export async function processPositionLiquidation(
           result.updatedRecords.push(`${period}:${docId}`);
         } else {
           // 새 레코드 생성
-          const initialStats = calculateInitialStats(liquidationInfo);
+          const initialStats = calculateInitialStats(position);
           const newRecord: PerformanceRecord = {
-            userId: liquidationInfo.userId,
+            userId,
             period,
             periodKey,
             startDate: period === 'overall' ? undefined : getPeriodStartDate(closeDate, period),
             endDate: period === 'overall' ? undefined : getPeriodEndDate(closeDate, period),
             stats: initialStats,
-            liquidatedPositionIds: [liquidationInfo.positionId],
+            liquidatedPositionIds: [position.id!],
             createdAt: getCurrentTime(),
             updatedAt: getCurrentTime(),
           };
@@ -624,24 +548,27 @@ function getPeriodEndDate(date: Date, period: PerformancePeriod): Date {
 /**
  * 초기 통계 계산 (첫 번째 거래)
  */
-function calculateInitialStats(liquidationInfo: PositionLiquidationInfo): PerformanceStats {
-  const isWin = liquidationInfo.realizedPL > 0;
-  const investment = liquidationInfo.openPrice * liquidationInfo.amount;
+function calculateInitialStats(position: Position): PerformanceStats {
+  // Position에서 실현 손익 계산 (netPL 또는 계산)
+  const realizedPL = position.netPL || 0;
+  const plRatio = position.plRatio || 0;
+  const isWin = realizedPL > 0;
+  const investment = (position.openPrice || 0) * (position.amount || 0);
   
   return {
     totalTrades: 1,
     winCount: isWin ? 1 : 0,
     loseCount: isWin ? 0 : 1,
     winRate: isWin ? 100 : 0,
-    totalRealizedPL: liquidationInfo.realizedPL,
-    averagePL: liquidationInfo.realizedPL,
-    averagePLRatio: liquidationInfo.plRatio,
-    maxProfit: isWin ? liquidationInfo.realizedPL : 0,
-    maxLoss: isWin ? 0 : liquidationInfo.realizedPL,
-    totalFee: liquidationInfo.fee || 0,
+    totalRealizedPL: realizedPL,
+    averagePL: realizedPL,
+    averagePLRatio: plRatio,
+    maxProfit: isWin ? realizedPL : 0,
+    maxLoss: isWin ? 0 : realizedPL,
+    totalFee: position.fee || 0,
     totalInvestment: investment,
-    totalProfit: isWin ? liquidationInfo.realizedPL : 0,
-    totalLoss: isWin ? 0 : Math.abs(liquidationInfo.realizedPL),
+    totalProfit: isWin ? realizedPL : 0,
+    totalLoss: isWin ? 0 : Math.abs(realizedPL),
     profitLossRatio: undefined,
   };
 }
@@ -651,25 +578,28 @@ function calculateInitialStats(liquidationInfo: PositionLiquidationInfo): Perfor
  */
 function calculateUpdatedStats(
   existingStats: PerformanceStats,
-  liquidationInfo: PositionLiquidationInfo
+  position: Position
 ): PerformanceStats {
-  const isWin = liquidationInfo.realizedPL > 0;
-  const investment = liquidationInfo.openPrice * liquidationInfo.amount;
+  // Position에서 실현 손익 계산
+  const realizedPL = position.netPL || 0;
+  const plRatio = position.plRatio || 0;
+  const isWin = realizedPL > 0;
+  const investment = (position.openPrice || 0) * (position.amount || 0);
   
   const totalTrades = existingStats.totalTrades + 1;
   const winCount = existingStats.winCount + (isWin ? 1 : 0);
   const loseCount = existingStats.loseCount + (isWin ? 0 : 1);
-  const totalRealizedPL = existingStats.totalRealizedPL + liquidationInfo.realizedPL;
-  const totalFee = existingStats.totalFee + (liquidationInfo.fee || 0);
+  const totalRealizedPL = existingStats.totalRealizedPL + realizedPL;
+  const totalFee = existingStats.totalFee + (position.fee || 0);
   const totalInvestment = existingStats.totalInvestment + investment;
-  const totalProfit = existingStats.totalProfit + (isWin ? liquidationInfo.realizedPL : 0);
-  const totalLoss = existingStats.totalLoss + (isWin ? 0 : Math.abs(liquidationInfo.realizedPL));
+  const totalProfit = existingStats.totalProfit + (isWin ? realizedPL : 0);
+  const totalLoss = existingStats.totalLoss + (isWin ? 0 : Math.abs(realizedPL));
   
   const winRate = (winCount / totalTrades) * 100;
   const averagePL = totalRealizedPL / totalTrades;
-  const averagePLRatio = ((existingStats.averagePLRatio * existingStats.totalTrades) + liquidationInfo.plRatio) / totalTrades;
-  const maxProfit = Math.max(existingStats.maxProfit, isWin ? liquidationInfo.realizedPL : 0);
-  const maxLoss = Math.min(existingStats.maxLoss, isWin ? 0 : liquidationInfo.realizedPL);
+  const averagePLRatio = ((existingStats.averagePLRatio * existingStats.totalTrades) + plRatio) / totalTrades;
+  const maxProfit = Math.max(existingStats.maxProfit, isWin ? realizedPL : 0);
+  const maxLoss = Math.min(existingStats.maxLoss, isWin ? 0 : realizedPL);
   
   const avgProfit = winCount > 0 ? totalProfit / winCount : 0;
   const avgLoss = loseCount > 0 ? totalLoss / loseCount : 0;
